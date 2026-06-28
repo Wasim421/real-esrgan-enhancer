@@ -34,7 +34,14 @@ jobs:
 
       - name: Accept SDK licenses
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          mkdir -p $HOME/.android
+          touch $HOME/.android/repositories.cfg
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "build-tools;34.0.0" \
+            "platforms;android-33" \
+            "platform-tools" 2>/dev/null || true
+          ls $ANDROID_HOME/build-tools/
 
       - name: Build APK
         run: |

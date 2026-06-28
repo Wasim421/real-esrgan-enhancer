@@ -17,14 +17,14 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             git zip unzip openjdk-17-jdk \
             autoconf libtool pkg-config \
             zlib1g-dev cmake libffi-dev libssl-dev \
-            libltdl-dev
+            libltdl-dev patch
 
       - name: Install Buildozer & Cython
         run: |
@@ -32,20 +32,30 @@ jobs:
           pip install cython==0.29.33
           pip install buildozer==1.5.0
 
-      - name: Accept SDK licenses
+      - name: Setup Android SDK licenses and tools
         run: |
           mkdir -p $HOME/.android
           touch $HOME/.android/repositories.cfg
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "build-tools;34.0.0" \
             "platforms;android-33" \
-            "platform-tools" 2>/dev/null || true
-          ls $ANDROID_HOME/build-tools/
+            "platform-tools" || true
+
+      - name: Setup Buildozer Android SDK path
+        run: |
+          mkdir -p $HOME/.buildozer/android/platform
+          ln -sf $ANDROID_HOME \
+            $HOME/.buildozer/android/platform/android-sdk
 
       - name: Build APK
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROIDSDK: /usr/local/lib/android/sdk
+          ANDROIDAPI: "33"
+          ANDROIDMINAPI: "24"
         run: |
-          buildozer -v android debug 2>&1 | tail -100
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

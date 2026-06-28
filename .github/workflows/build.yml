@@ -32,18 +32,27 @@ jobs:
           pip install cython==0.29.33
           pip install buildozer==1.5.0
 
-      - name: Setup Android SDK licenses and tools
+      - name: Fix Android SDK structure for Buildozer
         run: |
+          # Accept all licenses
           mkdir -p $HOME/.android
           touch $HOME/.android/repositories.cfg
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+
+          # Install build tools
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "build-tools;34.0.0" \
             "platforms;android-33" \
             "platform-tools" || true
 
-      - name: Setup Buildozer Android SDK path
-        run: |
+          # Buildozer পুরনো tools/bin/sdkmanager খোঁজে, তাই symlink বানাই
+          mkdir -p $ANDROID_HOME/tools/bin
+          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            $ANDROID_HOME/tools/bin/sdkmanager
+          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager \
+            $ANDROID_HOME/tools/bin/avdmanager
+
+          # Buildozer এর জন্য SDK symlink
           mkdir -p $HOME/.buildozer/android/platform
           ln -sf $ANDROID_HOME \
             $HOME/.buildozer/android/platform/android-sdk
